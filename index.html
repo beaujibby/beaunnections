@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>beaunnections</title>
+		<link rel="icon" type="image/png" href="icon.png">
+		<style>
+			@keyframes appear {
+				from {
+					transform: scale(0);
+					opacity: 0;
+				}
+				to {
+					transform: scale(1);
+					opacity: 1;
+				}
+			}
+			@keyframes disappear {
+				from {
+					transform: scale(1);
+					opacity: 1;
+				}
+				to {
+					transform: scale(0);
+					opacity: 0.5;
+				}
+			}
+			@keyframes press {
+				from {
+					transform: scale(1);
+				}
+				33% {
+					transform: scale(1.1);
+				}
+				50% {
+					transform: scale(0.9);
+				}
+				to
+				{
+					transform: scale(1);
+				}
+			}
+
+			html {
+				width: 100%;
+				height: 100%;
+				margin: 0;
+
+				font-family: monospace;
+			}
+			body {
+				width: 100%;
+				height: 100%;
+
+				margin: 0;
+				background: #333;
+
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				align-items: center;
+			}
+			#title {
+				font-size: 5em;
+				color: #ccc;
+			}
+			#subtitle {
+				font-size: 4em;
+				color: #ccc;
+			}
+			#scoreboard {
+				font-size: 2em;
+				color: #ccc;
+			}
+			#play_area {
+				width: 600px;
+				height: 750px;
+				border-radius: 8px;
+				background: #444;
+
+				display: flex;
+				flex-direction: column;
+				justify-content: space-evenly;
+				align-items: center;
+			}
+			#banners {
+				display: flex;
+				flex-direction: column;
+			}
+			.banner {
+				margin: 12px;
+				width: 552px;
+				height: 120px;
+				border-radius: 12px;
+
+				display: flex;
+				flex-direction: column;
+				justify-content: space-evenly;
+				align-items: center;
+
+				animation: appear .3s linear;
+			}
+			.banner:nth-of-type(1) {
+				background: #69c;
+			}
+			.banner:nth-of-type(2) {
+				background: #6c9;
+			}
+			.banner:nth-of-type(3) {
+				background: #c69;
+			}
+			.banner:nth-of-type(4) {
+				background: #c96;
+			}
+			.topic {
+				font-size: 2.5em;
+			}
+			.items {
+				font-size: 1.75em;
+				text-align: center;
+			}
+			#squares {
+				display: grid;
+				grid-template-columns: 1fr 1fr 1fr 1fr;
+			}
+			.square {
+				margin: 12px;
+				width: 120px;
+				height: 120px;
+				border-radius: 12px;
+				background: #333;
+				color: #ccc;
+				/*word-break: break-word;*/
+				font-size: 1em;
+				user-select: none;
+
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				text-align: center;
+
+				transition: .3s linear;
+			}
+			.square:hover {
+				background: #222;
+				cursor: pointer;
+			}
+			.square.selected {
+				background: #ccc;
+				color: #333;
+
+				animation: press .3s linear;
+			}
+			.square.selected:hover {
+				background: #aaa;
+			}
+			.square.solved {
+				background: #333;
+				color: #ccc;
+				opacity: 0;
+
+				animation: disappear 0.7s linear;
+			}
+			span {
+				width: fit-content;
+			}
+			button {
+				background: #333;
+				color: #ccc;
+				border: 0;
+				padding: 0;
+				border-radius: 12px;
+				font-family: monospace;
+				font-size: 2em;
+
+				transition: .3s linear;
+			}
+			button:hover {
+				background: #222;
+				cursor: pointer;
+			}
+			button:active {
+				background: #333;
+			}
+			#submit_guess {
+				width: 264px;
+				height: 60px;
+			}
+			#status {
+				color: #ccc;
+				font-size: 2em;
+			}
+		</style>
+		<script src="data.js"></script>
+		</script>
+	</head>
+	<body>
+		<div id="title">beaunnections</div>
+		<div id="subtitle">♥ ♥ ♥ beaujibby 🔗</div>
+		<div id="scoreboard">[0 flawless] [0 streak] [0 lifetime]</div>
+		<div id="play_area">
+			<div id="banners">
+			</div>
+			<div id="squares">
+				<div class="square" topic="board games">checkers</div>
+				<div class="square" topic="vegetables">broccoli</div>
+				<div class="square" topic="seasons">spring</div>
+				<div class="square" topic="vegetables">carrots</div>
+				<div class="square" topic="board games">monopoly</div>
+				<div class="square" topic="celestial bodies">sun</div>
+				<div class="square" topic="celestial bodies">jupiter</div>
+				<div class="square" topic="seasons">autumn</div>
+				<div class="square" topic="celestial bodies">mars</div>
+				<div class="square" topic="board games">risk</div>
+				<div class="square" topic="vegetables">peas</div>
+				<div class="square" topic="seasons">summer</div>
+				<div class="square" topic="celestial bodies">moon</div>
+				<div class="square" topic="board games">chess</div>
+				<div class="square" topic="vegetables">corn</div>
+				<div class="square" topic="seasons">winter</div>
+			</div>
+			<div id="status">select 4 squares</div>
+			<button id="submit_guess">guess</button>
+		</div>
+	</body>
+	<script type="text/javascript">
+		
+		let resize_text = (element, min_font_size, max_font_size) => {
+			let text = element.innerText;
+
+			let max_height = element.getBoundingClientRect().height;
+			let max_width = element.getBoundingClientRect().width;
+
+			let span = document.createElement("span");
+			span.innerText = text;
+			element.innerText = "";
+			element.appendChild(span);
+
+			let font_size = 1;
+			while(span.getBoundingClientRect().height <= max_height && span.getBoundingClientRect().width <= max_width) {
+				font_size += 0.01;
+				span.style.fontSize = `${font_size}em`;
+			}
+			while(span.getBoundingClientRect().height > max_height || span.getBoundingClientRect().width > max_width) {
+				font_size -= 0.01;
+				span.style.fontSize = `${font_size}em`;
+			}
+			font_size = Math.min(Math.max(min_font_size, font_size), max_font_size);
+			element.style.fontSize = `${font_size-0.1}em`;
+			span.remove();
+			element.innerText = text;
+		}
+
+		let squares = document.querySelector("#squares");
+
+		//setup
+		let topics = {};
+		for(let i = 0; i < 4; i++) {
+			let random_topic = Object.keys(topics_dictionary)[Math.floor(Math.random() * Object.keys(topics_dictionary).length)];
+			let random_items = [];
+			for(let j = 0; j < 4; j++) {
+				let random_index = Math.floor(Math.random() * topics_dictionary[random_topic].length);
+				let chosen_item = topics_dictionary[random_topic][random_index];
+				random_items.push(chosen_item);
+				topics_dictionary[random_topic] = topics_dictionary[random_topic].filter(item => item !== chosen_item);
+			}
+			topics[random_topic] = random_items;
+			delete topics_dictionary[random_topic];
+		}
+		let random_squares = Array.from(squares.children).sort(() => Math.random() - 0.5);
+		for(let i = 0; i < 4; i++) {
+			let topic = Object.keys(topics)[i];
+			for(let j = 0; j < 4; j++) {
+				let item = topics[topic][j];
+				random_squares[i*4 + j].setAttribute("topic", topic);
+				random_squares[i*4 + j].innerHTML = item;
+				resize_text(random_squares[i*4 + j], 1, 1.5);
+			}
+		}
+
+		//control
+		let animation_time = 700;
+		let max_selected = 4;
+		let lives = 3;
+
+		let banners = document.querySelector("#banners");
+		let status = document.querySelector("#status");
+		let subtitle = document.querySelector("#subtitle");
+		let scoreboard = document.querySelector("#scoreboard");
+
+		let scores = JSON.parse(window.localStorage.getItem("scores")) !== null ? JSON.parse(window.localStorage.getItem("scores")) : {"flawless":0, "streak": 0, "lifetime":0};
+		scoreboard.innerText = `[${scores.flawless} flawless] [${scores.streak} streak] [${scores.lifetime} lifetime]`;
+
+		let count_selected = () => {
+			return Array.from(squares.children).reduce((count, square) => count + (square.classList.contains("selected") === true), 0);
+		}
+
+		Array.from(squares.children).forEach(square => square.onclick = () => {
+			if(square.classList.contains("selected")) { //deselect square
+				square.classList.remove("selected");
+			}
+			else { //select square, ensure at most max_selected squares are now selected
+				if(count_selected() < max_selected) {
+					square.classList.add("selected");
+				}
+			}
+		});
+
+		let guess_button = document.querySelector("#submit_guess");
+		guess_button.onclick = () => {
+			if(lives < 0) {
+				location.reload();
+			}
+			if(count_selected() === 0 && Array.from(squares.children).length === max_selected) {
+				for(let i = 0; i < Array.from(squares.children).length; i++) {
+					Array.from(squares.children)[i].classList.add("selected");
+				}
+			}
+			if(count_selected() !== max_selected) {
+				status.innerText = `select ${max_selected} squares`;
+				return;
+			}
+			let guess_topics = [... new Set(Array.from(squares.children).filter(square => square.classList.contains("selected")).map(square => square.getAttribute("topic")))];
+			if(guess_topics.length === 1) { //only one category of topics was guessed (correct)
+				status.innerText = "correct!";
+				let topic = guess_topics[0];
+				let items = Array.from(squares.children).filter(square => square.classList.contains("selected")).map(square => square.innerText);
+
+				//create new banner for solved topic
+				let banner = document.createElement("div");
+				banner.innerHTML = `<div class='topic'>${topic}</div><div class='items'>${items.join(", ")}</div>`;
+				banner.classList.add("banner");
+				//banners.appendChild(banner);
+
+				Array.from(squares.children).filter(square => square.classList.contains("selected")).forEach(square => {
+					square.classList.remove("selected");
+					square.classList.add("solved");
+
+					//squares.insertBefore(square, squares.children[0]);
+					
+					window.setTimeout(() => {square.remove()}, animation_time);
+				});
+				window.setTimeout(() => {
+					banners.appendChild(banner);
+					if(Array.from(banners.children).length === 4) { //all four topics have been solved
+						status.innerText = "you win!";
+						subtitle.innerText = `${lives > 0 ? "♥ ".repeat(lives): ""}beaujibby 🎉`;
+						guess_button.innerText = "play again";
+
+						//handle score
+						if(lives === 3) {
+							scores.flawless += 1;
+						} else {
+							scores.flawless = 0;
+						}
+						scores.streak += 1;
+						scores.lifetime += 1;
+						window.localStorage.setItem("scores", JSON.stringify(scores));
+						//end handle score
+
+						lives = -1;
+					}
+				}, animation_time);
+			}
+			else {
+				lives -= 1;
+				if(lives >= 0) {
+					status.innerText = "</3";
+					subtitle.innerText = `${"♥ ".repeat(lives)}beaujibby 🔗`;
+				}
+				else {
+					status.innerText = "you lose!";
+					guess_button.innerText = "play again";
+					//handle score
+					scores.flawless = 0;
+					scores.streak = 0;
+					window.localStorage.setItem("scores", JSON.stringify(scores));
+					//end handle score
+				}
+			}
+		}
+
+		let clear_score = () => {
+			scores.flawless = 0;
+			scores.streak = 0;
+			scores.lifetime = 0;
+			window.localStorage.setItem("scores", JSON.stringify(scores));
+			location.reload();
+		}
+	</script>
+</html>

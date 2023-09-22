@@ -371,7 +371,7 @@
 			load_puzzle(topics);
 		}
 		else {
-			import("./data_promise.js").then(data => {
+			import("./data.js").then(data => {
 				topics_dictionary = data.topics_dictionary;
 				topics = generate_puzzle(topics_dictionary);
 				load_puzzle(topics);

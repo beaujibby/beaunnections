@@ -6,22 +6,22 @@
 		<style>
 			@keyframes appear {
 				from {
-					transform: scale(0);
+					/*transform: scale(0);*/
 					opacity: 0;
 				}
 				to {
-					transform: scale(1);
+					/*transform: scale(1);*/
 					opacity: 1;
 				}
 			}
 			@keyframes disappear {
 				from {
-					transform: scale(1);
+					/*transform: scale(1);*/
 					opacity: 1;
 				}
 				to {
-					transform: scale(0);
-					opacity: 0.5;
+					/*transform: scale(0.5);*/
+					opacity: 0;
 				}
 			}
 			@keyframes press {
@@ -112,11 +112,14 @@
 				background: #c96;
 			}
 			.topic {
-				font-size: 2.5em;
+				text-align: center;
+				width: 100%;
+				height: 35%;
 			}
 			.items {
-				font-size: 1.75em;
 				text-align: center;
+				width: 100%;
+				height: 65%;
 			}
 			#squares {
 				display: grid;
@@ -160,9 +163,6 @@
 
 				animation: disappear 0.7s linear;
 			}
-			span {
-				width: fit-content;
-			}
 			button {
 				background: #333;
 				color: #ccc;
@@ -190,7 +190,10 @@
 				font-size: 2em;
 			}
 		</style>
-		<script src="data.js"></script>
+		<!-- <script src="data.js"></script> -->
+		<script type="importmap">
+			{ "imports" : { "topics_dictionary" : "./data.js" } }
+		</script>
 		</script>
 	</head>
 	<body>
@@ -198,100 +201,102 @@
 		<div id="subtitle">♥ ♥ ♥ beaujibby 🔗</div>
 		<div id="scoreboard">[0 flawless] [0 streak] [0 lifetime]</div>
 		<div id="play_area">
-			<div id="banners">
-			</div>
+			<div id="banners"></div>
 			<div id="squares">
-				<div class="square" topic="board games">checkers</div>
-				<div class="square" topic="vegetables">broccoli</div>
-				<div class="square" topic="seasons">spring</div>
-				<div class="square" topic="vegetables">carrots</div>
-				<div class="square" topic="board games">monopoly</div>
-				<div class="square" topic="celestial bodies">sun</div>
-				<div class="square" topic="celestial bodies">jupiter</div>
-				<div class="square" topic="seasons">autumn</div>
-				<div class="square" topic="celestial bodies">mars</div>
-				<div class="square" topic="board games">risk</div>
-				<div class="square" topic="vegetables">peas</div>
-				<div class="square" topic="seasons">summer</div>
-				<div class="square" topic="celestial bodies">moon</div>
-				<div class="square" topic="board games">chess</div>
-				<div class="square" topic="vegetables">corn</div>
-				<div class="square" topic="seasons">winter</div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
+				<div class="square"></div>
 			</div>
 			<div id="status">select 4 squares</div>
 			<button id="submit_guess">guess</button>
 		</div>
 	</body>
 	<script type="text/javascript">
-		
-		let resize_text = (element, min_font_size, max_font_size) => {
-			let text = element.innerText;
+		/*
+			todo: make sure play area is smaller than document.getClientBoundingRect,
+			resize play area as needed, make everything inside play area
+			scale with play area
+		*/
+		let subtitle = document.querySelector("#subtitle");
+		let scoreboard = document.querySelector("#scoreboard");
+		let banners = document.querySelector("#banners");
+		let squares = document.querySelector("#squares");
+		let status = document.querySelector("#status");
+		let guess_button = document.querySelector("#submit_guess");
+		let animation_time = 700;
+		let max_selected = 4;
+		let lives = 3;
+		let topics_dictionary = {};
+		let topics = {};
+		let scores = {"flawless":0, "streak": 0, "lifetime":0};
 
+
+		let resize_text = (element, min_font_size, max_font_size) => { //all measurements in em
+			let text = element.innerText;
 			let max_height = element.getBoundingClientRect().height;
 			let max_width = element.getBoundingClientRect().width;
 
 			let span = document.createElement("span");
+			span.style.width = "fit-content";
 			span.innerText = text;
 			element.innerText = "";
 			element.appendChild(span);
 
 			let font_size = 1;
 			while(span.getBoundingClientRect().height <= max_height && span.getBoundingClientRect().width <= max_width) {
-				font_size += 0.01;
+				font_size *= 1.05;
 				span.style.fontSize = `${font_size}em`;
 			}
 			while(span.getBoundingClientRect().height > max_height || span.getBoundingClientRect().width > max_width) {
-				font_size -= 0.01;
+				font_size /= 1.05;
 				span.style.fontSize = `${font_size}em`;
 			}
-			font_size = Math.min(Math.max(min_font_size, font_size), max_font_size);
-			element.style.fontSize = `${font_size-0.1}em`;
+			font_size = Math.min(Math.max(min_font_size, font_size), max_font_size); //force min_font_size <= font_size <= max_font_size
+			element.style.fontSize = `${font_size}em`;
+			
 			span.remove();
 			element.innerText = text;
 		}
 
-		let squares = document.querySelector("#squares");
-
-		//setup
-		let topics = {};
-		for(let i = 0; i < 4; i++) {
-			let random_topic = Object.keys(topics_dictionary)[Math.floor(Math.random() * Object.keys(topics_dictionary).length)];
-			let random_items = [];
-			for(let j = 0; j < 4; j++) {
-				let random_index = Math.floor(Math.random() * topics_dictionary[random_topic].length);
-				let chosen_item = topics_dictionary[random_topic][random_index];
-				random_items.push(chosen_item);
-				topics_dictionary[random_topic] = topics_dictionary[random_topic].filter(item => item !== chosen_item);
-			}
-			topics[random_topic] = random_items;
-			delete topics_dictionary[random_topic];
-		}
-		let random_squares = Array.from(squares.children).sort(() => Math.random() - 0.5);
-		for(let i = 0; i < 4; i++) {
-			let topic = Object.keys(topics)[i];
-			for(let j = 0; j < 4; j++) {
-				let item = topics[topic][j];
-				random_squares[i*4 + j].setAttribute("topic", topic);
-				random_squares[i*4 + j].innerHTML = item;
-				resize_text(random_squares[i*4 + j], 1, 1.5);
+		let remove_children = (element) => {
+			while (element.firstChild) {
+				element.removeChild(element.lastChild);
 			}
 		}
 
-		//control
-		let animation_time = 700;
-		let max_selected = 4;
-		let lives = 3;
-
-		let banners = document.querySelector("#banners");
-		let status = document.querySelector("#status");
-		let subtitle = document.querySelector("#subtitle");
-		let scoreboard = document.querySelector("#scoreboard");
-
-		let scores = JSON.parse(window.localStorage.getItem("scores")) !== null ? JSON.parse(window.localStorage.getItem("scores")) : {"flawless":0, "streak": 0, "lifetime":0};
-		scoreboard.innerText = `[${scores.flawless} flawless] [${scores.streak} streak] [${scores.lifetime} lifetime]`;
+		let populate_squares = () => {
+			for(let i = 0; i < 16; i++) {
+				let square = document.createElement("div");
+				square.classList.add("square");
+				squares.appendChild(square);
+			}
+			Array.from(squares.children).forEach(square => square.onclick = () => {
+				if(square.classList.contains("selected")) { //deselect square
+					square.classList.remove("selected");
+				}
+				else { //select square, ensure at most max_selected squares are now selected
+					if(count_selected() < max_selected) {
+						square.classList.add("selected");
+					}
+				}
+			});
+		}
 
 		let count_selected = () => {
-			return Array.from(squares.children).reduce((count, square) => count + (square.classList.contains("selected") === true), 0);
+			return Array.from(squares.children).reduce((count, square) => count + (square.classList.contains("selected")), 0);
 		}
 
 		Array.from(squares.children).forEach(square => square.onclick = () => {
@@ -305,42 +310,118 @@
 			}
 		});
 
-		let guess_button = document.querySelector("#submit_guess");
-		guess_button.onclick = () => {
-			if(lives < 0) {
-				location.reload();
+		let generate_puzzle = (topics_dictionary) => {
+			let topics = {};
+			for(let i = 0; i < 4; i++) {
+				let random_topic;
+				do {
+					random_topic = Object.keys(topics_dictionary)[Math.floor(Math.random() * Object.keys(topics_dictionary).length)];
+				} while(topics[random_topic] !== undefined)
+				let random_items = [];
+				for(let j = 0; j < 4; j++) {
+					let random_index = -1;
+					do {
+						random_index = Math.floor(Math.random() * topics_dictionary[random_topic].length);
+					} while(random_items.indexOf(topics_dictionary[random_topic][random_index]) !== -1)
+					let chosen_item = topics_dictionary[random_topic][random_index];
+					random_items.push(chosen_item);
+				}
+				topics[random_topic] = random_items;
 			}
+			return topics;
+		}
+
+		let load_puzzle = (topics) => {
+			let random_squares = Array.from(squares.children).sort(() => Math.random() - 0.5);
+			for(let i = 0; i < 4; i++) {
+				let topic = Object.keys(topics)[i];
+				for(let j = 0; j < 4; j++) {
+					let item = topics[topic][j];
+					random_squares[i*4 + j].setAttribute("topic", topic);
+					random_squares[i*4 + j].innerHTML = item;
+					resize_text(random_squares[i*4 + j], 0, 1.5);
+				}
+			}
+		}
+
+		let reset = () => {
+			remove_children(squares);
+			remove_children(banners);
+			populate_squares();
+			topics = generate_puzzle(topics_dictionary);
+			load_puzzle(topics);
+			lives = 3;
+			subtitle.innerText = `${"♥ ".repeat(lives)}beaujibby 🔗`;
+			scores = JSON.parse(window.localStorage.getItem("scores")) !== null ? JSON.parse(window.localStorage.getItem("scores")) : scores;
+			scoreboard.innerText = `[${scores.flawless} f] [${scores.streak} s] [${scores.lifetime} l]`;
+			status.innerText = `select ${max_selected} squares`;
+			guess_button.innerText = "guess";
+		}
+
+		//setup
+		if(window.localStorage.getItem("topics_dictionary") !== null) {
+			topics_dictionary = JSON.parse(window.localStorage.getItem("topics_dictionary"));
+			window.localStorage.removeItem("topics_dictionary");
+			import("./data.js").then(data => {
+				topics_dictionary = data.topics_dictionary;
+				let next_topics = generate_puzzle(topics_dictionary);
+				window.localStorage.setItem("topics_dictionary", JSON.stringify(next_topics));
+			});
+			topics = generate_puzzle(topics_dictionary);
+			load_puzzle(topics);
+		}
+		else {
+			import("./data_promise.js").then(data => {
+				topics_dictionary = data.topics_dictionary;
+				topics = generate_puzzle(topics_dictionary);
+				load_puzzle(topics);
+				let next_topics = generate_puzzle(topics_dictionary);
+				window.localStorage.setItem("topics_dictionary", JSON.stringify(next_topics));
+			});
+		}
+
+		//control
+		guess_button.onclick = () => {
+			//game ended, reset for next round
+			if(lives < 0) {
+				reset();
+				return;
+			}
+
+			//blank guess with 4 items (1 topic) remaining
 			if(count_selected() === 0 && Array.from(squares.children).length === max_selected) {
 				for(let i = 0; i < Array.from(squares.children).length; i++) {
 					Array.from(squares.children)[i].classList.add("selected");
 				}
 			}
+			//wrong number of squares selected (almost always going to be not enough)
 			if(count_selected() !== max_selected) {
-				status.innerText = `select ${max_selected} squares`;
+				status.innerText = `select ${max_selected - count_selected()} more squares`;
 				return;
 			}
+
 			let guess_topics = [... new Set(Array.from(squares.children).filter(square => square.classList.contains("selected")).map(square => square.getAttribute("topic")))];
+
+			//correct guess
 			if(guess_topics.length === 1) { //only one category of topics was guessed (correct)
 				status.innerText = "correct!";
 				let topic = guess_topics[0];
 				let items = Array.from(squares.children).filter(square => square.classList.contains("selected")).map(square => square.innerText);
-
 				//create new banner for solved topic
 				let banner = document.createElement("div");
 				banner.innerHTML = `<div class='topic'>${topic}</div><div class='items'>${items.join(", ")}</div>`;
 				banner.classList.add("banner");
-				//banners.appendChild(banner);
-
+				//remove solved squares
 				Array.from(squares.children).filter(square => square.classList.contains("selected")).forEach(square => {
 					square.classList.remove("selected");
 					square.classList.add("solved");
-
-					//squares.insertBefore(square, squares.children[0]);
-					
 					window.setTimeout(() => {square.remove()}, animation_time);
 				});
 				window.setTimeout(() => {
 					banners.appendChild(banner);
+					resize_text(banner.children[0],0,5); //resize topic
+					resize_text(banner.children[1],0,5); //resize items
+
 					if(Array.from(banners.children).length === 4) { //all four topics have been solved
 						status.innerText = "you win!";
 						subtitle.innerText = `${lives > 0 ? "♥ ".repeat(lives): ""}beaujibby 🎉`;
@@ -361,20 +442,22 @@
 					}
 				}, animation_time);
 			}
+			//incorrect guess
 			else {
 				lives -= 1;
+				//lose a life
 				if(lives >= 0) {
-					status.innerText = "</3";
+					status.innerText = `</${guess_topics.length}`; //number in broken heart is number of groups selected from
 					subtitle.innerText = `${"♥ ".repeat(lives)}beaujibby 🔗`;
 				}
+				//game over
 				else {
 					status.innerText = "you lose!";
 					guess_button.innerText = "play again";
-					//handle score
+					//reset score
 					scores.flawless = 0;
 					scores.streak = 0;
 					window.localStorage.setItem("scores", JSON.stringify(scores));
-					//end handle score
 				}
 			}
 		}
@@ -384,7 +467,6 @@
 			scores.streak = 0;
 			scores.lifetime = 0;
 			window.localStorage.setItem("scores", JSON.stringify(scores));
-			location.reload();
 		}
 	</script>
 </html>
